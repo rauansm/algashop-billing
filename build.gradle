@@ -1,7 +1,15 @@
+buildscript {
+    dependencies {
+        classpath 'org.flywaydb:flyway-core:11.13.0'
+        classpath 'org.flywaydb:flyway-database-postgresql:11.13.0'
+    }
+}
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.flywaydb.flyway' version '11.13.0'
 }
 
 group = 'com.algashop'
@@ -28,18 +36,22 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'commons-validator:commons-validator:1.9.0'
     implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
     implementation 'org.modelmapper:modelmapper:3.2.4'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.apache.commons:commons-lang3:3.18.0'
     testImplementation 'org.assertj:assertj-core:3.27.3'
 
+
+    runtimeOnly 'org.postgresql:postgresql'
     compileOnly 'org.projectlombok:lombok'
-    runtimeOnly 'com.h2database:h2'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
 
     mockitoAgent('org.mockito:mockito-core:5.14.2') { transitive = false }
 }
@@ -79,4 +91,17 @@ tasks.register('integrationTest', Test) {
 		includeTestsMatching "*IT"
 		excludeTestsMatching "*Test"
 	}
+}
+
+bootJar {
+    archiveFileName = 'billing.jar'
+}
+
+tasks.register('dockerBuild', Exec) {
+    description = 'Builds a multi-platform Docker image using Buildx'
+    group = 'build'
+    dependsOn('bootJar')
+    workingDir project.rootDir
+    commandLine 'docker', 'buildx', 'build', '--platform', 'linux/arm64/v8,linux/amd64',
+            '--tag', 'algashop/billing:dev', '.'
 }

@@ -1,15 +1,17 @@
-package com.algashop.billing.infrastructure.payment;
+package com.algashop.billing.infrastructure.payment.fake;
 
 import com.algashop.billing.domain.invoice.PaymentMethod;
 import com.algashop.billing.domain.invoice.payment.Payment;
 import com.algashop.billing.domain.invoice.payment.PaymentGatewayService;
 import com.algashop.billing.domain.invoice.payment.PaymentRequest;
 import com.algashop.billing.domain.invoice.payment.PaymentStatus;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 @Service
+@ConditionalOnProperty(name = "algashop.integrations.payment.provider", havingValue = "FAKE")
 public class PaymentGatewayServiceFakeImpl implements PaymentGatewayService {
 
     @Override

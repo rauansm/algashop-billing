@@ -3,6 +3,7 @@ package com.algashop.billing.domain.invoice;
 import com.algashop.billing.domain.AbstractAuditableAggregateRoot;
 import com.algashop.billing.domain.IdGenerator;
 import com.algashop.billing.domain.DomainException;
+import com.algashop.billing.domain.invoice.payment.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
@@ -106,6 +107,7 @@ public class Invoice extends AbstractAuditableAggregateRoot<Invoice> {
         }
         setPaidAt(OffsetDateTime.now());
         setStatus(InvoiceStatus.PAID);
+        setExpiresAt(null);
         registerEvent(new InvoicePaidEvent(this.getId(), this.getCustomerId(), this.getOrderId(), this.getPaidAt()));
     }
 
@@ -116,6 +118,7 @@ public class Invoice extends AbstractAuditableAggregateRoot<Invoice> {
         setCancelReason(cancelReason);
         setCanceledAt(OffsetDateTime.now());
         setStatus(InvoiceStatus.CANCELED);
+        setExpiresAt(null);
         registerEvent(new InvoiceCanceledEvent(this.getId(), this.getCustomerId(), this.getOrderId(), this.getCanceledAt()));
     }
 
@@ -135,5 +138,13 @@ public class Invoice extends AbstractAuditableAggregateRoot<Invoice> {
         PaymentSettings paymentSettings = PaymentSettings.brandNew(method, creditCardId);
         paymentSettings.setInvoice(this);
         this.setPaymentSettings(paymentSettings);
+    }
+
+    public void updatePaymentStatus(PaymentStatus status) {
+        switch (status) {
+            case FAILED -> cancel("Payment failed");
+            case REFUNDED -> cancel("Payment refunded");
+            case PAID -> markAsPaid();
+        }
     }
 }
